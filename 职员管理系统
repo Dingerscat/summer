@@ -1,0 +1,376 @@
+/*第1题
+现需要用c语言开发一款企业人事管理系统, 系统必须用链表实现。
+管理对象为雇员，其节点定义如下，请在空行位置补充你认为必要的两个属性：
+struct MyNode
+{       int    ID;               //编号(不重复)
+        char Name[40];   //名称
+        int    Salary;          //工资
+        _______________;  	 //补充属性1 ：  char depart[20] --部门   
+        _________________;  //补充属性2 ：  char pos[20]--职位 
+        struct MyNode *   next;
+};
+要求实现的功能包括以下几条，请补充你认为必要的6，7两个功能。每条功能必须用函数实现，函数名称如下，函数参数及返回类型可自行定义；
+1，        从特定文件读入信息：      ReadFromFile();  
+2，        将信息写入特定文件:        WriteToFile();
+3，        显示链表所有信息：         Display();
+4，        添加录入节点信息:           InputRecord();
+5，        删除特定节点信息:         DeleteRecord(); 
+6，        查找：   					find();
+7,         修改节点信息    ： 			update(); 
+*/ 
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+struct mynode {
+	int ID;					//ID 
+	char name[40];			//名字 
+	int salary;				//工资 
+	char depart[20];		//部门 
+	char pos[20];			//职位 
+	struct  mynode *next;  //节点指针 
+};
+
+typedef struct mynode NODE; 
+
+NODE *head; //链表头指针 
+
+int menu();//主菜单函数返回choice提供选择
+void ReadFromFile(); //从文件读取到链表
+void WriteToFile(); //利用插入函数创建一个链表--->>>保存链表到文件 
+void Display();		//从文件读取到链表--->>>打印链表 
+void InputRecord(); //利用插入函数，一直循环插入节点增加链表长度--->>>保存链表至文件 
+void DeleteRecord();//从文件读取数据到链表--- >>>输入输入指定信息查找--->>>找到此节点后删除--->>>保存链表至文件 
+
+
+void insertnode(NODE *newnode);	//按照小到大顺序插入节点 。******【按照顺序插入避免了排序操作】 ****** 
+
+void update(NODE *upnode);      //修改指定节点： 文件读取数据到链表--- >>>输入输入指定信息查找--->>>找到此节点后替换 --->>>保存链表至文件 
+void save();        //保存链表至文件
+NODE * find();		//查找函数 ;从文件读取数据到链表--- >>>输入输入指定信息查找,返回找到的节点地址 
+
+int main(void)
+{
+	NODE *tempnode;
+	NODE *	upnode; 
+	int choice=menu();
+	
+	while(choice!=0){
+		switch(choice){
+			case 1:
+				printf("\t\t  1:把目前系统数据读取到链表\n");
+				ReadFromFile();
+				break;
+			case 2:
+				printf("\t\t  2:创建人事数据保存到d:people.txt文件\n");
+				WriteToFile();
+				break;
+			case 3:
+				printf("\t\t  3:打印链表\n");
+				Display();
+				break;
+			case 4:
+				printf("\t\t  4:添加员工信息\n");
+				
+				InputRecord();
+				break;
+			case 5:
+				printf("\t\t  5:删除员工信息\n");
+				
+				DeleteRecord();
+				break;
+			case 6:
+				printf("\t\t  6:修改员工信息\n");
+			
+				upnode=find();
+				update(upnode); 
+				break;
+			case 7:
+				printf("\t\t  7:查找员工信息\n");
+			
+				tempnode=find();
+				printf("员工信息如下\n");
+				printf("\t\tID\t\tNAME\t\tSALARY\t\tDEPART\t\tPOS\n");
+				printf("\t\t%d\t\t%s\t\t%d\t\t%s\t\t%s\n",tempnode->ID,tempnode->name,tempnode->salary,tempnode->depart,tempnode->pos);
+				
+				break;
+			default:
+				printf("你的选择错误，重新输入：\n");
+				break;
+		} 
+		printf("请输入你的选择：\n"); 
+		scanf("%d",&choice); 
+	}
+	return 0;
+}
+
+int menu()
+{
+	int choice;
+	printf("=======【企业人事管理系统】=======\n");
+	printf("\t\t  1:把目前系统数据读取到链表\n");
+	printf("\t\t  2:创建人事数据保存到d:people.txt文件\n");
+	printf("\t\t  3:打印链表\n");
+	printf("\t\t  4:添加员工信息\n");
+	printf("\t\t  5:删除员工信息\n");
+	printf("\t\t  6:修改员工信息\n");
+	printf("\t\t  7:查找员工信息\n"); 
+	printf("\t\t  0:退出系统\n"); 
+	printf("请输入你的选择:\n");
+	scanf("%d",&choice);
+	return choice; 	 
+}	
+
+
+void ReadFromFile()
+{
+	FILE *fp;
+	int ID;					//ID 
+	char name[40];			//名字 
+	int salary;				//工资 
+	char depart[20];		//部门 
+	char pos[20];			//职位 
+	NODE *next;	
+	NODE *newnode;
+	
+	if((fp=fopen("d:\\people.txt","r"))==NULL){
+		printf("文件打开失败\n");
+		exit(0);
+	}
+	
+	while(!feof(fp)){
+		fscanf(fp,"%d %s %d %s %s",&ID,name,&salary,depart,pos);
+		
+		newnode=(NODE *)malloc(sizeof(NODE));
+
+		newnode->ID=ID;
+		newnode->salary=salary;
+		strcpy(newnode->name,name);
+		strcpy(newnode->depart,depart);
+		strcpy(newnode->pos,pos);
+		newnode->next=NULL;
+		
+		insertnode(newnode);
+		
+	}
+	fclose(fp);
+}
+
+//
+void WriteToFile()
+{
+	int ID;					//ID 
+	char name[40];			//名字 
+	int salary;				//工资 
+	char depart[20];		//部门 
+	char pos[20];			//职位 
+	NODE *next;
+	NODE *newnode;
+	
+	
+	printf("输入你的员工信息，ID为0结束创建\n");
+	printf("输入你的员工ID：");
+	scanf("%d",&ID);
+	while(ID!=0){
+		printf("输入你的员工姓名：");
+		scanf("%s",name); 
+		printf("输入你的员工工资：");
+		scanf("%d",&salary);
+		printf("输入你的员工部门：");
+		scanf("%s",depart);
+		printf("输入你的员工职位：");
+		scanf("%s",pos);
+		
+		newnode=(NODE *)malloc(sizeof(NODE));
+
+		newnode->ID=ID;
+		newnode->salary=salary;
+		strcpy(newnode->name,name);
+		strcpy(newnode->depart,depart);
+		strcpy(newnode->pos,pos);
+		newnode->next=NULL;
+		
+		insertnode(newnode);  //插入 
+				
+		printf("输入你的员工ID：");
+		scanf("%d",&ID);
+	}
+	save();
+}
+
+//
+void Display()
+{	
+	NODE *t;
+	t=head;
+	while(t!=NULL){
+		printf("\t\tID\t\tNAME\t\tSALARY\t\tDEPART\t\tPOS\n");
+		printf("\t\t%d\t\t%s\t\t%d\t\t%s\t\t%s\n",t->ID,t->name,t->salary,t->depart,t->pos);
+		t=t->next;
+	}
+}
+
+//
+void InputRecord()
+{
+	int ID;					//ID 
+	char name[40];			//名字 
+	int salary;				//工资 
+	char depart[20];		//部门 
+	char pos[20];			//职位 
+	NODE *next;
+	NODE *newnode;
+	
+	printf("请输入你要添加的员工信息，姓名为*时候结束\n");
+	printf("请输入姓名：\n");
+	scanf("%s",name);
+	
+	while(strcmp(name,"*")!=0){
+		printf("请输入ID：\n");
+		scanf("%d",&ID);
+		printf("请输入工资：\n");
+		scanf("%d",&salary);
+		printf("请输入部门：\n");
+		scanf("%s",depart);
+		printf("请输入职位：\n");
+		scanf("%s",pos);
+		
+		newnode=(NODE *)malloc(sizeof(NODE));
+		
+		newnode->ID=ID;
+		newnode->salary=salary;
+		strcpy(newnode->name,name);
+		strcpy(newnode->depart,depart);
+		strcpy(newnode->pos,pos);
+		newnode->next=NULL;
+		
+		insertnode(newnode);
+		
+		printf("请输入姓名：\n");
+		scanf("%s",name);
+	}
+	
+	printf("输入结束：......\n");
+	save();
+}
+
+void DeleteRecord()
+{
+	NODE *t,*t1,*findnode;
+	findnode=find(); 
+
+	while(head!=NULL&&head->ID==findnode->ID){
+		t1=head;
+		head=head->next;
+		free(t1); 
+	}
+	if(head==NULL){
+		return;
+	}
+	t=t1;
+	t1=t1->next;
+	while(t1!=NULL){
+		if(t1->ID==findnode->ID){
+			t->next=t1->next;
+			free(t1);
+		} 
+		else{
+			t=t1;
+			t1=t1->next;
+		}
+	} 
+	
+	
+}
+//按照小到大  顺序  插入 
+void insertnode(NODE *newnode)
+{	
+	NODE *t,*t1;
+	t1=head;
+	if(head==NULL){
+		head=newnode;
+		head->next=NULL;
+	} 
+	else{
+		while((newnode->ID>t1->ID)&&(t1->next!=NULL)){
+			t=t1;
+			t1=t1->next;
+		}
+		if(newnode->ID<=t1->ID){
+			if(head==t1){
+				head=newnode;
+			}
+			else{
+				t->next=newnode;
+				newnode->next=NULL;
+			}
+		}
+		else{
+			t1->next=newnode;
+			newnode->next=NULL;
+		}
+	}
+}
+
+//
+void update(NODE *upnode)
+{
+	int ID;					//ID 
+	char name[40];			//名字 
+	int salary;				//工资 
+	char depart[20];		//部门 
+	char pos[20];			//职位 
+	NODE *next;
+	
+	printf("请输入ID：\n");
+	scanf("%d",&ID);		
+	printf("请输入姓名：\n");
+	scanf("%s",name);
+	printf("请输入工资：\n");
+	scanf("%d",&salary);
+	printf("请输入部门：\n");
+	scanf("%s",depart);
+	printf("请输入职位：\n");
+	scanf("%s",pos);
+	upnode->ID=ID;
+	upnode->salary=salary;
+	strcpy(upnode->name,name);
+	strcpy(upnode->depart,depart);
+	strcpy(upnode->pos,pos);
+	
+	save();
+}
+
+NODE *find()
+{
+	int ID;
+	NODE *t;
+	t=head;
+	printf("请输入你要查找的员工ID：\n");
+	scanf("%d",&ID);
+	
+	while(t->ID!=ID&&t->next!=NULL){
+		t=t->next;
+	}
+	if(t->ID==ID){
+		return t; 
+	}	
+	else{
+		printf("未找到节点\n");
+		return NULL;
+	}
+}
+
+void save()
+{
+	FILE *fp;
+	NODE *p;
+	fp=fopen("d:\\people.txt","w");
+	
+	for(p=head;p!=NULL;p=p->next){
+		fprintf(fp,"%d %d %s %s %s",p->ID,p->salary,p->name,p->depart,p->pos);
+	}
+	fclose(fp);
+	printf("文件保存成功！\n");
+}

@@ -1,0 +1,36 @@
+#include<stdio.h>
+unsigned int Gcd(unsigned int M,unsigned int N)
+{
+    unsigned int Rem;
+    while(N > 0)             //除数为0跳出循环 
+    {
+        Rem = M % N;		//换位操作 
+        M = N;
+        N = Rem;
+    }
+    return M;
+}
+int main(void)
+{
+    int a,b;
+    scanf("%d %d",&a,&b);
+    printf("the greatest common factor of %d and %d is ",a,b);
+    printf("%d\n",Gcd(a,b));
+    return 0;
+}
+
+/*证明：a / b = q ...r;
+	  则：a=bq+r;
+	  设：a ，b都被u整除
+	  则：a=su，b=tu；
+	  r=a-bq=su-tuq=u(s-tq)**s,t,q 都是整数，所以u也可以被r整除
+	  
+	  反之：
+	  设：b，r都被m整除 
+	  则 b=mx；r=my；
+	  a=bq+r=mxq+my=m(xq+y)**x,q,y都是整数，所以m也可以被a整除 
+	  
+	  综上所述：a 和 b的每一个因子都是 r的因子，且 b 和  r的每一个因子都是a的因子
+	  那么自然a ,b 和 b,r的最大公约数相同   
+	  所以辗转相除得到的最后一个整除的式子的最大公约数和初始式子最大公约数相同，公约数为除数 
+*/ 
